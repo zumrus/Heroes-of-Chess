@@ -6,6 +6,7 @@
 | Автор: **Марат Хамадеев** | Created by **Marat Khamadeev** |
 | Сделано с помощью ИИ-агента от **Perplexity** под управлением **Claude Sonnet** | Made with an AI agent by **Perplexity**, powered by **Claude Sonnet** |
 | Полные правила: [Русская версия](rules_ru.md) | Full rules: [English version](rules_en.md) |
+| [Играть](https://zumrus.github.io/Heroes-of-Chess/) | [Play](https://zumrus.github.io/Heroes-of-Chess/) |
 
 ![Скриншот игры / Game screenshot](./screenshot.png)
 
