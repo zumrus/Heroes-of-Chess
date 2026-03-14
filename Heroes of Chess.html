@@ -1,0 +1,2447 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<!--
+   ______                            __
+  / ____/___  ____ ___  ____  __  __/ /____  _____
+ / /   / __ \/ __ `__ \/ __ \/ / / / __/ _ \/ ___/
+/ /___/ /_/ / / / / / / /_/ / /_/ / /_/  __/ /
+\____/\____/_/ /_/ /_/ .___/\__,_/\__/\___/_/
+                    /_/
+        Created with Perplexity Computer
+        https://www.perplexity.ai/computer
+-->
+<meta name="generator" content="Perplexity Computer">
+<meta name="author" content="Perplexity Computer">
+<meta property="og:see_also" content="https://www.perplexity.ai/computer">
+<link rel="author" href="https://www.perplexity.ai/computer">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Герои шахмат</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: 'Crimson Pro', Georgia, serif;
+  background: #0d1117;
+  color: #d4c8a8;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== DESIGN TOKENS ===== */
+:root {
+  --bg-dark: #0d1117;
+  --bg-panel: #1a1e2e;
+  --bg-parchment: #2a2520;
+  --gold: #c8a84e;
+  --gold-light: #e8d48e;
+  --gold-dim: #8a7430;
+  --cream: #f0e6c8;
+  --purple-dark: #3a2a4a;
+  --purple-piece: #6a4a8a;
+  --slate: #4a5568;
+  --red-glow: #ff4444;
+  --red-dim: rgba(255,68,68,0.3);
+  --green-dim: rgba(68,255,68,0.15);
+  --blue-dim: rgba(68,140,255,0.2);
+  --tile-light: #5a5040;
+  --tile-dark: #3a3028;
+  --tile-light-h: #6a6050;
+  --tile-dark-h: #4a4038;
+  --text-muted: #8a7a6a;
+  --font-display: 'Cinzel', serif;
+  --font-body: 'Crimson Pro', Georgia, serif;
+}
+
+/* ===== START SCREEN ===== */
+#lang-screen, #start-screen {
+  position: fixed; inset: 0; z-index: 1000;
+  background: radial-gradient(ellipse at center, #1a1520 0%, #0a0a10 70%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 24px;
+}
+#lang-screen h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900;
+  color: var(--gold);
+  text-shadow: 0 2px 12px rgba(200,168,78,0.4), 0 0 40px rgba(200,168,78,0.15);
+  letter-spacing: 0.08em;
+  text-align: center;
+  line-height: 1.2;
+}
+.lang-btn {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 12px 32px;
+  background: rgba(42,37,32,0.8);
+  color: var(--cream);
+  border: 2px solid var(--gold-dim);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.04em;
+}
+.lang-btn:hover {
+  background: rgba(200,168,78,0.2);
+  border-color: var(--gold);
+  box-shadow: 0 0 16px rgba(200,168,78,0.3);
+  transform: translateY(-1px);
+}
+#start-screen {
+  display: none;
+}
+#start-screen h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900;
+  color: var(--gold);
+  text-shadow: 0 2px 12px rgba(200,168,78,0.4), 0 0 40px rgba(200,168,78,0.15);
+  letter-spacing: 0.08em;
+}
+#start-screen .subtitle {
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+#start-btn {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  padding: 14px 48px;
+  background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+  color: #1a1520;
+  border: 2px solid var(--gold);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.05em;
+  margin-top: 16px;
+}
+#start-btn:hover {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  box-shadow: 0 0 20px rgba(200,168,78,0.4);
+  transform: translateY(-1px);
+}
+
+/* ===== GAME LAYOUT ===== */
+#game-container {
+  display: none;
+  width: 100%; height: 100vh;
+  flex-direction: row;
+  background: var(--bg-dark);
+  overflow: hidden;
+}
+#game-container.active { display: flex; }
+
+/* Board area */
+#board-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  min-width: 0;
+  overflow: hidden;
+}
+#board-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 4px;
+  text-shadow: 0 1px 6px rgba(200,168,78,0.3);
+}
+#board-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  font-style: italic;
+}
+
+/* Chess board */
+#board-wrapper {
+  position: relative;
+  aspect-ratio: 1;
+  max-height: calc(100vh - 160px);
+  max-width: calc(100vh - 160px);
+  width: 100%;
+}
+
+/* Board coordinates */
+#board-coords-wrapper {
+  position: relative;
+  aspect-ratio: 1;
+  max-height: calc(100vh - 160px);
+  max-width: calc(100vh - 160px);
+  width: 100%;
+}
+#board-wrapper {
+  position: absolute;
+  top: 20px; left: 20px;
+  right: 0; bottom: 0;
+  width: auto; height: auto;
+}
+.coord-label {
+  position: absolute;
+  font-family: var(--font-body);
+  font-size: clamp(0.55rem, 1.3vmin, 0.72rem);
+  font-weight: 600;
+  color: var(--gold-dim);
+  pointer-events: none;
+  user-select: none;
+}
+/* file labels (a-h) along bottom */
+.coord-file {
+  bottom: 0;
+  transform: translateX(-50%);
+}
+/* rank labels (1-8) along left */
+.coord-rank {
+  left: 0;
+  transform: translateY(50%) translateX(-100%) translateX(-4px);
+}
+#board {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  border: 3px solid var(--gold-dim);
+  box-shadow: 0 0 30px rgba(0,0,0,0.6), inset 0 0 10px rgba(0,0,0,0.3);
+  width: 100%;
+  height: 100%;
+}
+.square {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  transition: background 0.15s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.square.light { background: var(--tile-light); }
+.square.dark { background: var(--tile-dark); }
+
+/* Piece styling */
+.piece {
+  font-size: clamp(1.6rem, 5.5vmin, 3.2rem);
+  line-height: 1;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+  z-index: 2;
+  pointer-events: none;
+  transition: transform 0.12s;
+}
+.piece.white { color: var(--cream); filter: drop-shadow(0 1px 2px rgba(200,168,78,0.4)); }
+.piece.black { color: var(--purple-piece); filter: drop-shadow(0 1px 3px rgba(0,0,0,0.7)); }
+
+/* HP display */
+.hp-display {
+  position: absolute;
+  bottom: 1px;
+  right: 3px;
+  font-family: var(--font-body);
+  font-size: clamp(0.55rem, 1.4vmin, 0.75rem);
+  font-weight: 700;
+  color: var(--cream);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  z-index: 3;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Status icons */
+.status-defend {
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  font-size: clamp(0.5rem, 1.2vmin, 0.7rem);
+  z-index: 3;
+}
+.status-wait {
+  position: absolute;
+  top: 1px;
+  right: 2px;
+  font-size: clamp(0.5rem, 1.2vmin, 0.7rem);
+  z-index: 3;
+}
+
+/* Highlights */
+.square.valid-move { background: rgba(100,180,100,0.25) !important; cursor: pointer; }
+.square.valid-move:hover { background: rgba(100,180,100,0.4) !important; }
+.square.attackable { background: rgba(255,60,60,0.3) !important; box-shadow: inset 0 0 8px rgba(255,60,60,0.5); }
+.square.attackable:hover { background: rgba(255,60,60,0.5) !important; }
+.square.active-piece { animation: activePulse 1.2s ease-in-out infinite; }
+.square.attack-approach { background: rgba(255,140,0,0.3) !important; box-shadow: inset 0 0 8px rgba(255,140,0,0.5); }
+
+/* Sword cursor overlay on attackable square */
+.sword-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+  font-size: clamp(1.4rem, 4vmin, 2rem);
+  font-weight: 900;
+  color: #fff;
+  opacity: 0.95;
+  text-shadow: 0 0 6px rgba(255,60,60,0.9), 0 1px 3px rgba(0,0,0,0.9);
+}
+
+@keyframes activePulse {
+  0%, 100% { box-shadow: inset 0 0 6px 2px rgba(200,168,78,0.5); }
+  50% { box-shadow: inset 0 0 14px 4px rgba(200,168,78,0.9); }
+}
+
+.square.last-move { background: rgba(200,168,78,0.15) !important; }
+
+/* ===== INFO PANEL ===== */
+#info-panel {
+  width: 280px;
+  min-width: 280px;
+  background: var(--bg-panel);
+  border-left: 2px solid var(--gold-dim);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 12px;
+  gap: 10px;
+}
+.panel-section {
+  background: rgba(42,37,32,0.6);
+  border: 1px solid rgba(200,168,78,0.2);
+  border-radius: 4px;
+  padding: 10px;
+}
+.panel-title {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+.panel-value {
+  font-size: 0.95rem;
+  color: var(--cream);
+}
+
+/* King HP bars */
+.king-hp-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.king-hp-bar .king-icon { font-size: 1.2rem; }
+.king-hp-bar .hp-bar-bg {
+  flex: 1;
+  height: 12px;
+  background: rgba(0,0,0,0.4);
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid rgba(200,168,78,0.3);
+}
+.king-hp-bar .hp-bar-fill {
+  height: 100%;
+  transition: width 0.3s;
+  border-radius: 2px;
+}
+.hp-bar-fill.white-king { background: linear-gradient(90deg, #8a7430, #c8a84e); }
+.hp-bar-fill.black-king { background: linear-gradient(90deg, #4a2a6a, #8a5aaa); }
+.king-hp-text {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--cream);
+  min-width: 32px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Turn queue */
+#turn-queue {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.queue-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  color: var(--cream);
+}
+.queue-item.current {
+  background: rgba(200,168,78,0.2);
+  border: 1px solid var(--gold-dim);
+}
+.queue-item .q-icon { font-size: 1rem; min-width: 18px; text-align: center; }
+.queue-item .q-label { flex: 1; }
+.queue-item .q-hp { font-variant-numeric: tabular-nums; font-size: 0.7rem; color: var(--text-muted); }
+
+/* Action buttons */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+.action-btn {
+  flex: 1;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 8px 4px;
+  border: 1px solid var(--gold-dim);
+  border-radius: 3px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.15s;
+  color: var(--cream);
+  background: rgba(42,37,32,0.8);
+}
+.action-btn:hover:not(:disabled) {
+  background: rgba(200,168,78,0.2);
+  border-color: var(--gold);
+}
+.action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.action-btn.wait-btn { border-color: #6a8aaa; }
+.action-btn.defend-btn { border-color: #6a9a6a; }
+
+/* ===== BOARD ACTIONS (below board) ===== */
+#board-actions {
+  display: flex;
+  gap: 10px;
+  padding: 8px 0 4px;
+  width: 100%;
+  max-width: calc(100vh - 160px);
+}
+#board-actions .action-btn {
+  flex: 1;
+  font-size: 0.85rem;
+  padding: 10px 8px;
+}
+
+/* ===== COMBAT LOG ===== */
+#combat-log-area {
+  background: rgba(26,30,46,0.95);
+  border: 1px solid rgba(200,168,78,0.2);
+  border-radius: 4px;
+  padding: 8px 10px;
+  max-height: 80px;
+  overflow-y: auto;
+  margin-top: 4px;
+  width: 100%;
+  max-width: calc(100vh - 160px);
+}
+#combat-log-area .panel-title { margin-bottom: 4px; }
+#combat-log {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.log-entry {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+.log-entry .damage { color: var(--red-glow); font-weight: 600; }
+.log-entry .heal { color: #4a8; font-weight: 600; }
+.log-entry .piece-name { font-weight: 600; }
+.log-entry .piece-name-white { color: #e8d48e; }
+.log-entry .piece-name-black { color: #b88ae0; }
+.coord-tag { font-size: 0.75em; color: var(--gold-dim); font-family: monospace; letter-spacing: 0.02em; }
+
+/* ===== PROMOTION MODAL ===== */
+#promotion-modal {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+#promotion-modal.active { display: flex; }
+#promotion-choices {
+  background: var(--bg-panel);
+  border: 2px solid var(--gold);
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+}
+#promotion-choices h3 {
+  font-family: var(--font-display);
+  color: var(--gold);
+  margin-bottom: 12px;
+  font-size: 1rem;
+}
+.promo-options {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+.promo-option {
+  font-size: 2rem;
+  padding: 10px 14px;
+  background: rgba(42,37,32,0.8);
+  border: 2px solid var(--gold-dim);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.promo-option:hover {
+  background: rgba(200,168,78,0.2);
+  border-color: var(--gold);
+  transform: scale(1.1);
+}
+
+/* ===== END GAME MODAL ===== */
+#endgame-modal {
+  position: fixed; inset: 0; z-index: 600;
+  background: rgba(0,0,0,0.8);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+#endgame-content h2 {
+  font-family: var(--font-display);
+  color: var(--gold);
+  font-size: 1.6rem;
+  margin-bottom: 16px;
+}
+#endgame-stats {
+  text-align: left;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.stats-section-title {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 10px 0 4px;
+}
+#restart-btn {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 10px 32px;
+  background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+  color: #1a1520;
+  border: 2px solid var(--gold);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+#restart-btn:hover {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  box-shadow: 0 0 20px rgba(200,168,78,0.4);
+}
+
+/* ===== FOOTER ===== */
+#game-footer {
+  text-align: center;
+  padding: 4px;
+  font-size: 0.7rem;
+}
+#game-footer a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+#game-footer a:hover { color: var(--gold); }
+
+/* ===== BOT THINKING INDICATOR ===== */
+.bot-thinking {
+  font-size: 0.8rem;
+  color: var(--gold);
+  font-style: italic;
+  animation: blink 1s ease-in-out infinite;
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ===== PIECE MOVE ANIMATION ===== */
+/* Slide from old position to new position.
+   --dx-px / --dy-px set the pixel offset of the start position (where piece came FROM). */
+@keyframes pieceMoveIn {
+  from { transform: translate(var(--dx-px, 0px), var(--dy-px, 0px)); }
+  to   { transform: translate(0px, 0px); }
+}
+/* Attack lunge: nudge toward target then snap back. Fires after the move completes. */
+@keyframes pieceAttackLunge {
+  0%   { transform: translate(0px, 0px); }
+  45%  { transform: translate(var(--atk-dx-px, 0px), var(--atk-dy-px, 0px)); }
+  100% { transform: translate(0px, 0px); }
+}
+.piece-just-moved {
+  animation: pieceMoveIn 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+.piece-just-attacked {
+  /* delay = move duration so lunge plays after arriving */
+  animation: pieceAttackLunge 0.7s ease-in-out both;
+}
+
+@keyframes defendPulse {
+  0%   { box-shadow: inset 0 0 0 0 rgba(200,168,78,0); }
+  40%  { box-shadow: inset 0 0 16px 6px rgba(200,168,78,0.85); }
+  100% { box-shadow: inset 0 0 0 0 rgba(200,168,78,0); }
+}
+.piece-just-defended {
+  animation: defendPulse 1s ease-in-out forwards;
+}
+
+/* ===== MOVE LOG (full history) ===== */
+#move-log-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+#move-log {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.move-log-entry {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  border-bottom: 1px solid rgba(200,168,78,0.06);
+  padding: 1px 0;
+}
+.move-log-entry .piece-name { font-weight: 600; }
+.move-log-entry .piece-name-white { color: #e8d48e; }
+.move-log-entry .piece-name-black { color: #b88ae0; }
+.move-log-entry .damage { color: var(--red-glow); font-weight: 600; }
+
+/* ===== END GAME STATS FIGURES ===== */
+#endgame-modal.active { display: flex; }
+#endgame-content {
+  background: var(--bg-panel);
+  border: 2px solid var(--gold);
+  border-radius: 8px;
+  padding: 28px 36px;
+  text-align: center;
+  max-width: 520px;
+  width: 90vw;
+}
+.kills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-start;
+  margin: 6px 0 10px;
+}
+.kill-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(42,37,32,0.8);
+  border: 1px solid rgba(200,168,78,0.25);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 0.85rem;
+}
+.kill-chip .kc-icon { font-size: 1.1rem; }
+.kill-chip .kc-count { font-weight: 700; color: var(--gold-light); font-variant-numeric: tabular-nums; }
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- LANGUAGE SCREEN -->
+<div id="lang-screen">
+  <h1>Heroes of Chess<br><span style="font-size:0.6em;opacity:0.7">Герои шахмат</span></h1>
+  <div class="subtitle" style="margin-bottom:32px">Choose your language / Выберите язык</div>
+  <div style="display:flex;gap:16px;justify-content:center">
+    <button class="lang-btn" id="lang-en">🇬🇧 English</button>
+    <button class="lang-btn" id="lang-ru">🇷🇺 Русский</button>
+  </div>
+  <div style="margin-top:32px; font-size:0.75rem; color:#5a5a6a;">
+    <a href="https://www.perplexity.ai/computer" target="_blank" rel="noopener noreferrer" style="color:#5a5a6a;">Created with Perplexity Computer</a>
+  </div>
+</div>
+
+<!-- START SCREEN -->
+<div id="start-screen">
+  <h1 id="start-title">Герои шахмат</h1>
+  <div class="subtitle" id="start-subtitle">Шахматный вариант в духе Heroes of Might and Magic III</div>
+  <button id="start-btn">Начать игру</button>
+  <div id="start-author" style="margin-top:16px; font-size:0.85rem; color:var(--gold-dim); letter-spacing:0.04em;"></div>
+  <div style="margin-top:16px; font-size:0.75rem; color:#5a5a6a;">
+    <a href="https://www.perplexity.ai/computer" target="_blank" rel="noopener noreferrer" style="color:#5a5a6a;">Created with Perplexity Computer</a>
+  </div>
+</div>
+
+<!-- GAME CONTAINER -->
+<div id="game-container">
+  <div id="board-area">
+    <div id="board-title"></div>
+    <div id="board-subtitle">HoMM III Combat Chess</div>
+    <div id="board-coords-wrapper">
+      <div id="board-wrapper">
+        <div id="board"></div>
+      </div>
+    </div>
+    <!-- Actions moved here, below the board -->
+    <div id="board-actions">
+      <button class="action-btn wait-btn" id="wait-btn" disabled></button>
+      <button class="action-btn defend-btn" id="defend-btn" disabled></button>
+    </div>
+  </div>
+
+  <div id="info-panel">
+    <!-- Round info -->
+    <div class="panel-section">
+      <div class="panel-title" id="lbl-round"></div>
+      <div class="panel-value" id="round-display">1</div>
+    </div>
+
+    <!-- Active piece -->
+    <div class="panel-section">
+      <div class="panel-title" id="lbl-active"></div>
+      <div class="panel-value" id="active-piece-display">—</div>
+    </div>
+
+    <!-- King HP -->
+    <div class="panel-section">
+      <div class="panel-title" id="lbl-kings"></div>
+      <div class="king-hp-bar">
+        <span class="king-icon" style="color:var(--cream);">♔</span>
+        <div class="hp-bar-bg"><div class="hp-bar-fill white-king" id="white-king-hp" style="width:100%"></div></div>
+        <span class="king-hp-text" id="white-king-hp-text">9/9</span>
+      </div>
+      <div class="king-hp-bar">
+        <span class="king-icon" style="color:var(--purple-piece);">♚</span>
+        <div class="hp-bar-bg"><div class="hp-bar-fill black-king" id="black-king-hp" style="width:100%"></div></div>
+        <span class="king-hp-text" id="black-king-hp-text">9/9</span>
+      </div>
+    </div>
+
+    <!-- Move Log — takes all remaining space -->
+    <div class="panel-section" id="move-log-panel" style="flex:1; min-height:0;">
+      <div class="panel-title" id="lbl-log"></div>
+      <div id="move-log"></div>
+      <!-- turn-queue hidden but kept for JS compatibility -->
+      <div id="turn-queue" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- PROMOTION MODAL -->
+<div id="promotion-modal">
+  <div id="promotion-choices">
+    <h3 id="promo-title"></h3>
+    <div class="promo-options" id="promo-options"></div>
+  </div>
+</div>
+
+<!-- ENDGAME MODAL -->
+<div id="endgame-modal">
+  <div id="endgame-content">
+    <h2 id="endgame-title"></h2>
+    <div id="endgame-stats"></div>
+    <button id="restart-btn"></button>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div id="game-footer">
+  <a href="https://www.perplexity.ai/computer" target="_blank" rel="noopener noreferrer">Created with Perplexity Computer</a>
+</div>
+
+<script>
+// ============================================================
+// HEROES CHESS — FULL GAME LOGIC
+// ============================================================
+
+const PIECE_TYPES = ['pawn','knight','bishop','rook','queen','king'];
+const RANK_MAP = { pawn:1, knight:2, bishop:3, rook:5, queen:7, king:9 };
+const UNICODE_WHITE = { king:'♔', queen:'♕', rook:'♖', bishop:'♗', knight:'♘', pawn:'♙' };
+const UNICODE_BLACK = { king:'♚', queen:'♛', rook:'♜', bishop:'♝', knight:'♞', pawn:'♟' };
+const RANK_ORDER = [9,7,5,3,2,1];
+const RANK_ORDER_REVERSE = [1,2,3,5,7,9];
+
+// ===== I18N =====
+let currentLang = 'ru';
+
+const STRINGS = {
+  ru: {
+    gameTitle: 'Герои шахмат',
+    gameSubtitle: 'Шахматный вариант в духе Heroes of Might and Magic III',
+    startBtn: 'Начать игру',
+    restartBtn: 'Играть снова',
+    waitBtn: '⏳ Ждать',
+    defendBtn: '🛡 Защита',
+    lblRound: 'Раунд',
+    lblActive: 'Активная фигура',
+    lblKings: 'Здоровье Королей',
+    lblLog: 'Журнал боя',
+    promoTitle: 'Выберите фигуру для превращения',
+    colorWhite: 'Белые',
+    colorBlack: 'Чёрные',
+    thinking: 'думает...',
+    winWhite: 'Белые победили!',
+    winBlack: 'Чёрные победили!',
+    statsRounds: 'Раундов сыграно',
+    statsWhiteKilled: '⚔️ Белые уничтожили',
+    statsBlackKilled: '⚔️ Чёрные уничтожили',
+    statsSurvivors: 'Выжившие белые',
+    statsSurvivors2: 'Чёрные',
+    statsNone: '— нет',
+    logAttacks: 'атакует',
+    logDamage: 'урона',
+    logCounters: 'контратакует',
+    logDestroyed: 'уничтожен!',
+    logDefends: 'защищается (нет доступных ходов).',
+    logDefendsManual: 'защищается (+1 защита).',
+    logPawnPromo: 'Пешка превратилась в',
+    logPawnAutoPromo: 'Пешка автоматически превратилась в',
+    logWaits: 'ожидает на',
+    author: 'Автор: Марат Хамадеев',
+    pieces: { king:'Король', queen:'Ферзь', rook:'Ладья', bishop:'Слон', knight:'Конь', pawn:'Пешка' },
+  },
+  en: {
+    gameTitle: 'Heroes of Chess',
+    gameSubtitle: 'Chess variant inspired by Heroes of Might and Magic III',
+    startBtn: 'Start Game',
+    restartBtn: 'Play Again',
+    waitBtn: '⏳ Wait',
+    defendBtn: '🛡 Defend',
+    lblRound: 'Round',
+    lblActive: 'Active Piece',
+    lblKings: 'King HP',
+    lblLog: 'Battle Log',
+    promoTitle: 'Choose a piece to promote to',
+    colorWhite: 'White',
+    colorBlack: 'Black',
+    thinking: 'thinking...',
+    winWhite: 'White wins!',
+    winBlack: 'Black wins!',
+    statsRounds: 'Rounds played',
+    statsWhiteKilled: '⚔️ White destroyed',
+    statsBlackKilled: '⚔️ Black destroyed',
+    statsSurvivors: 'Survivors — White',
+    statsSurvivors2: 'Black',
+    statsNone: '— none',
+    logAttacks: 'attacks',
+    logDamage: 'dmg',
+    logCounters: 'counter-attacks',
+    logDestroyed: 'destroyed!',
+    logDefends: 'defends (no moves available).',
+    logDefendsManual: 'defends (+1 defense).',
+    logPawnPromo: 'Pawn promoted to',
+    logPawnAutoPromo: 'Pawn auto-promoted to',
+    logWaits: 'waits at',
+    author: 'By Marat Khamadeev',
+    pieces: { king:'King', queen:'Queen', rook:'Rook', bishop:'Bishop', knight:'Knight', pawn:'Pawn' },
+  }
+};
+
+function t(key) { return STRINGS[currentLang][key] || STRINGS['en'][key] || key; }
+function tPiece(type) { return STRINGS[currentLang].pieces[type]; }
+
+// Cached square pixel size — measured once before each render so offsetWidth is always valid
+let cachedSqPx = 80;
+function updateSqPx() {
+  const boardEl = document.getElementById('board');
+  if (boardEl && boardEl.offsetWidth > 0) cachedSqPx = boardEl.offsetWidth / 8;
+}
+window.addEventListener('resize', updateSqPx);
+
+let nextPieceId = 1;
+
+function createPiece(type, color, col, row) {
+  const rank = RANK_MAP[type];
+  return {
+    id: nextPieceId++,
+    type, color, col, row,
+    rank,
+    attack: rank,
+    defense: rank,
+    hp: rank,
+    maxHp: rank,
+    speed: rank,
+    isDefending: false,
+    hasWaited: false,
+    hasCounterAttacked: false,
+    alive: true
+  };
+}
+
+// ===== GAME STATE =====
+let gameState = {
+  pieces: [],
+  round: 1,
+  phase: 'start', // start, playing, promotion, gameover
+  turnQueue: [],
+  waitQueue: [],
+  currentTurnIndex: 0,
+  selectedPiece: null,
+  validMoves: [],
+  attackablePieces: [],
+  combatLog: [],
+  moveLog: [],
+  killsByType: { white: {}, black: {} }, // white: pieces killed by white, black: by black
+  stats: { whiteKills: 0, blackKills: 0 },
+  gameOver: false,
+  winner: null,
+  promotionPawn: null,
+  isProcessingBot: false,
+  lastMoveFrom: null,
+  lastMoveTo: null,
+  lastAnimatedPieceId: null,
+  lastAttackedPieceId: null,   // piece doing the attack lunge animation
+  lastAttackTargetCol: null,   // direction of lunge (target position)
+  lastAttackTargetRow: null,
+  lastDefendedPieceId: null,
+  lastKilledPiece: null,       // ghost of bot-killed piece shown during lunge animation
+  whiteHasKing: true,
+  blackHasKing: true
+};
+
+window.gameState = gameState;
+
+// ===== BOARD INITIALIZATION =====
+function initPieces() {
+  nextPieceId = 1;
+  const pieces = [];
+  // White pieces (rows 1-2, internal row 0-1)
+  const backRow = ['rook','knight','bishop','queen','king','bishop','knight','rook'];
+  for (let c = 0; c < 8; c++) {
+    pieces.push(createPiece(backRow[c], 'white', c, 0));
+  }
+  for (let c = 0; c < 8; c++) {
+    pieces.push(createPiece('pawn', 'white', c, 1));
+  }
+  // Black pieces (rows 7-8, internal row 7-6)
+  for (let c = 0; c < 8; c++) {
+    pieces.push(createPiece(backRow[c], 'black', c, 7));
+  }
+  for (let c = 0; c < 8; c++) {
+    pieces.push(createPiece('pawn', 'black', c, 6));
+  }
+  return pieces;
+}
+
+function getPieceAt(col, row) {
+  return gameState.pieces.find(p => p.alive && p.col === col && p.row === row);
+}
+
+// ===== MOVEMENT RULES =====
+
+// Helper: is a square occupied, treating the piece's own current square as empty
+// (because the piece will have left that square to stand at fromCol/fromRow)
+function squareBlockedForMove(nc, nr, piece, fromCol, fromRow) {
+  // If this is the piece's original square and it has moved away, treat as empty
+  if (nc === piece.col && nr === piece.row && (fromCol !== piece.col || fromRow !== piece.row)) {
+    return false;
+  }
+  return !!getPieceAt(nc, nr);
+}
+
+function squareEnemyForMove(nc, nr, piece, fromCol, fromRow) {
+  // Same logic for finding enemies: treat piece's own square as empty when moved
+  if (nc === piece.col && nr === piece.row && (fromCol !== piece.col || fromRow !== piece.row)) {
+    return null;
+  }
+  const t = getPieceAt(nc, nr);
+  return (t && t.color !== piece.color) ? t : null;
+}
+
+// Returns all empty squares a sliding piece can reach from its CURRENT position.
+function getSlidingReachable(piece, directions) {
+  const reachable = [];
+  for (const [dc, dr] of directions) {
+    let nc = piece.col + dc, nr = piece.row + dr;
+    while (nc >= 0 && nc <= 7 && nr >= 0 && nr <= 7) {
+      if (getPieceAt(nc, nr)) break;
+      reachable.push({ col: nc, row: nr });
+      nc += dc; nr += dr;
+    }
+  }
+  return reachable;
+}
+
+// Returns all enemies a sliding piece can attack when standing at (fromCol, fromRow).
+// Returns attacks for a sliding piece standing at (fromCol, fromRow).
+// HoMM3 rule: from any square the piece can stand on, it attacks enemies
+// that are IMMEDIATELY adjacent (1 step away) in the piece's valid directions.
+// The approach square is always fromCol/fromRow (the piece is already standing there).
+function getSlidingAttacks(piece, fromCol, fromRow, directions) {
+  const attacks = [];
+  for (const [dc, dr] of directions) {
+    const nc = fromCol + dc, nr = fromRow + dr;
+    if (nc < 0 || nc > 7 || nr < 0 || nr > 7) continue;
+    const enemy = squareEnemyForMove(nc, nr, piece, fromCol, fromRow);
+    if (enemy) {
+      attacks.push({ col: nc, row: nr, target: enemy, approachCol: fromCol, approachRow: fromRow });
+    }
+  }
+  return attacks;
+}
+
+function getValidMoves(piece) {
+  if (!piece || !piece.alive) return { moves: [], attacks: [] };
+  const moves = [];
+  const attacks = [];
+  const attackKeys = new Set(); // deduplicate: "targetId:approachCol:approachRow"
+  const { type, color, col, row } = piece;
+  const dir = color === 'white' ? 1 : -1;
+
+  function addAttack(entry) {
+    const key = `${entry.target.id}:${entry.approachCol}:${entry.approachRow}`;
+    if (!attackKeys.has(key)) {
+      attackKeys.add(key);
+      attacks.push(entry);
+    }
+  }
+
+  switch (type) {
+    case 'pawn': {
+      // ---- MOVES: forward 1 or 2 squares ----
+      const reachable = []; // all positions this pawn can stand on this turn
+      const fwd = row + dir;
+      if (fwd >= 0 && fwd <= 7 && !getPieceAt(col, fwd)) {
+        moves.push({ col, row: fwd });
+        reachable.push({ col, row: fwd });
+        const startRow = color === 'white' ? 1 : 6;
+        if (row === startRow) {
+          const fwd2 = row + 2 * dir;
+          if (fwd2 >= 0 && fwd2 <= 7 && !getPieceAt(col, fwd2)) {
+            moves.push({ col, row: fwd2 });
+            reachable.push({ col, row: fwd2 });
+          }
+        }
+      }
+      // ---- ATTACKS: from current square AND from each reachable square ----
+      // From each possible standing position, check both forward-diagonals
+      const standPositions = [{ col, row }, ...reachable];
+      for (const pos of standPositions) {
+        const attackRow = pos.row + dir;
+        for (const dc of [-1, 1]) {
+          const nc = pos.col + dc;
+          if (nc >= 0 && nc <= 7 && attackRow >= 0 && attackRow <= 7) {
+            const target = getPieceAt(nc, attackRow);
+            if (target && target.color !== color) {
+              addAttack({ col: nc, row: attackRow, target, approachCol: pos.col, approachRow: pos.row });
+            }
+          }
+        }
+      }
+      break;
+    }
+
+    case 'knight': {
+      // Knight moves on L-shapes; attacks are RANGED — always from current square
+      const knightOffsets = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+      for (const [dc, dr] of knightOffsets) {
+        const nc = col + dc, nr = row + dr;
+        if (nc >= 0 && nc <= 7 && nr >= 0 && nr <= 7) {
+          const target = getPieceAt(nc, nr);
+          if (!target) {
+            moves.push({ col: nc, row: nr });
+          } else if (target.color !== color) {
+            addAttack({ col: nc, row: nr, target, approachCol: col, approachRow: row });
+          }
+        }
+      }
+      break;
+    }
+
+    case 'bishop': {
+      const dirs = [[1,1],[1,-1],[-1,1],[-1,-1]];
+      const reachable = getSlidingReachable(piece, dirs);
+      for (const { col: nc, row: nr } of reachable) moves.push({ col: nc, row: nr });
+      // Attacks from current position + each reachable square
+      for (const a of getSlidingAttacks(piece, col, row, dirs)) addAttack(a);
+      for (const pos of reachable) {
+        for (const a of getSlidingAttacks(piece, pos.col, pos.row, dirs)) addAttack(a);
+      }
+      break;
+    }
+
+    case 'rook': {
+      const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+      const reachable = getSlidingReachable(piece, dirs);
+      for (const { col: nc, row: nr } of reachable) moves.push({ col: nc, row: nr });
+      for (const a of getSlidingAttacks(piece, col, row, dirs)) addAttack(a);
+      for (const pos of reachable) {
+        for (const a of getSlidingAttacks(piece, pos.col, pos.row, dirs)) addAttack(a);
+      }
+      break;
+    }
+
+    case 'queen': {
+      const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+      const reachable = getSlidingReachable(piece, dirs);
+      for (const { col: nc, row: nr } of reachable) moves.push({ col: nc, row: nr });
+      for (const a of getSlidingAttacks(piece, col, row, dirs)) addAttack(a);
+      for (const pos of reachable) {
+        for (const a of getSlidingAttacks(piece, pos.col, pos.row, dirs)) addAttack(a);
+      }
+      break;
+    }
+
+    case 'king': {
+      // King moves to adjacent squares and attacks from there (like other pieces).
+      // Collect all squares king can stand on (current + empty neighbors).
+      const kingStandPositions = [{ col, row }];
+      for (let dc = -1; dc <= 1; dc++) {
+        for (let dr = -1; dr <= 1; dr++) {
+          if (dc === 0 && dr === 0) continue;
+          const nc = col + dc, nr = row + dr;
+          if (nc >= 0 && nc <= 7 && nr >= 0 && nr <= 7) {
+            const t = getPieceAt(nc, nr);
+            if (!t) {
+              moves.push({ col: nc, row: nr });
+              kingStandPositions.push({ col: nc, row: nr });
+            }
+          }
+        }
+      }
+      // From each position king can stand on, check all 8 neighbors for enemies
+      for (const pos of kingStandPositions) {
+        for (let dc = -1; dc <= 1; dc++) {
+          for (let dr = -1; dr <= 1; dr++) {
+            if (dc === 0 && dr === 0) continue;
+            const nc = pos.col + dc, nr = pos.row + dr;
+            if (nc >= 0 && nc <= 7 && nr >= 0 && nr <= 7) {
+              const target = squareEnemyForMove(nc, nr, piece, pos.col, pos.row);
+              if (target) {
+                addAttack({ col: nc, row: nr, target, approachCol: pos.col, approachRow: pos.row });
+              }
+            }
+          }
+        }
+      }
+      break;
+    }
+  }
+
+  return { moves, attacks };
+}
+
+// (Legacy stub kept for compatibility)
+function findApproachSquare(piece, targetCol, targetRow) {
+  return { col: piece.col, row: piece.row };
+}
+
+// ===== TURN QUEUE GENERATION =====
+function generateTurnQueue() {
+  const queue = [];
+
+  for (const rank of RANK_ORDER) {
+    const whitePieces = gameState.pieces
+      .filter(p => p.alive && p.color === 'white' && p.rank === rank)
+      .sort((a, b) => a.col - b.col);
+    const blackPieces = gameState.pieces
+      .filter(p => p.alive && p.color === 'black' && p.rank === rank)
+      .sort((a, b) => a.col - b.col);
+
+    // Interleave: alternate white and black
+    const maxLen = Math.max(whitePieces.length, blackPieces.length);
+    for (let i = 0; i < maxLen; i++) {
+      if (i < whitePieces.length) queue.push(whitePieces[i].id);
+      if (i < blackPieces.length) queue.push(blackPieces[i].id);
+    }
+  }
+
+  return queue;
+}
+
+function applyRound1AutoWait() {
+  // On round 1, all pieces with rank >= 3 automatically get Wait
+  if (gameState.round !== 1) return;
+
+  const newQueue = [];
+  const waitPieces = [];
+
+  for (const pid of gameState.turnQueue) {
+    const piece = gameState.pieces.find(p => p.id === pid);
+    if (piece && piece.rank >= 3) {
+      piece.hasWaited = true;
+      waitPieces.push(pid);
+    } else {
+      newQueue.push(pid);
+    }
+  }
+
+  // Sort wait pieces by reverse rank order (pawns first = rank 1 first, but these are rank >= 3)
+  // Actually wait queue is reverse: lowest rank first
+  waitPieces.sort((a, b) => {
+    const pa = gameState.pieces.find(p => p.id === a);
+    const pb = gameState.pieces.find(p => p.id === b);
+    if (pa.rank !== pb.rank) return pa.rank - pb.rank; // ascending = reverse of main order
+    // Within same rank, interleave white/black by col
+    if (pa.color !== pb.color) {
+      // Keep original interleaving
+    }
+    return 0;
+  });
+
+  // Actually, rebuild wait queue properly with interleaving per rank
+  const waitByRank = {};
+  for (const pid of waitPieces) {
+    const p = gameState.pieces.find(pp => pp.id === pid);
+    if (!waitByRank[p.rank]) waitByRank[p.rank] = [];
+    waitByRank[p.rank].push(p);
+  }
+
+  const sortedWaitQueue = [];
+  for (const rank of RANK_ORDER_REVERSE) {
+    if (!waitByRank[rank]) continue;
+    const whites = waitByRank[rank].filter(p => p.color === 'white').sort((a,b) => a.col - b.col);
+    const blacks = waitByRank[rank].filter(p => p.color === 'black').sort((a,b) => a.col - b.col);
+    const maxLen = Math.max(whites.length, blacks.length);
+    for (let i = 0; i < maxLen; i++) {
+      if (i < whites.length) sortedWaitQueue.push(whites[i].id);
+      if (i < blacks.length) sortedWaitQueue.push(blacks[i].id);
+    }
+  }
+
+  gameState.turnQueue = newQueue;
+  gameState.waitQueue = sortedWaitQueue;
+}
+
+// ===== COMBAT =====
+// deferDefenderDeath: if true and defender HP drops to 0, don't kill it yet — return { defenderDied: true }
+// so the caller can animate first then finalize the death.
+function resolveCombat(attacker, defender, attackerApproachCol, attackerApproachRow, deferAll) {
+  // Move attacker to approach square (knight stays — ranged attack; king moves like any other piece)
+  const fromCol = attacker.col, fromRow = attacker.row;
+  if (attacker.type !== 'knight') {
+    attacker.col = attackerApproachCol;
+    attacker.row = attackerApproachRow;
+  }
+
+  // Animations only for bot pieces; player pieces show result instantly
+  if (isBotControlled(attacker.color)) {
+    gameState.lastMoveFrom = { col: fromCol, row: fromRow };
+    gameState.lastMoveTo = { col: attacker.col, row: attacker.row };
+    gameState.lastAnimatedPieceId = attacker.id;
+    // lunge is set separately after slide — see startPieceTurn bot path
+    gameState.lastAttackedPieceId = null;
+  } else {
+    gameState.lastAnimatedPieceId = null;
+    gameState.lastAttackedPieceId = null;
+    gameState.lastAttackTargetCol = null;
+    gameState.lastAttackTargetRow = null;
+  }
+
+  // Calculate damage
+  let damage = attacker.attack - defender.defense;
+  if (damage <= 0) damage = 1;
+
+  if (deferAll) {
+    // Bot attack: return everything needed; caller applies damage+log+death after animation
+    const attackerPos = (attacker.type === 'king' || attacker.type === 'knight')
+      ? coord(fromCol, fromRow)
+      : `${coord(fromCol, fromRow)}→${coord(attacker.col, attacker.row)}`;
+    return {
+      deferred: true,
+      attacker, defender, damage,
+      attackerPos,
+      targetCol: defender.col,
+      targetRow: defender.row
+    };
+  }
+
+  // Immediate path (player attack)
+  defender.hp -= damage;
+  const attackerPos = (attacker.type === 'king' || attacker.type === 'knight')
+    ? coord(fromCol, fromRow)
+    : `${coord(fromCol, fromRow)}→${coord(attacker.col, attacker.row)}`;
+  addCombatLog(`${pieceName(attacker)} ${attackerPos} ${t('logAttacks')} ${pieceName(defender)} ${coord(defender.col, defender.row)} — <span class="damage">${damage} ${t('logDamage')}</span> (HP: ${Math.max(0,defender.hp)}/${defender.maxHp})`);
+
+  if (defender.hp <= 0) {
+    killPiece(defender);
+    return { defenderDied: true };
+  }
+
+  // Counter-attack
+  const canCounter = defender.type === 'king' || !defender.hasCounterAttacked;
+  if (canCounter && defender.alive && attacker.alive) {
+    let counterDmg = defender.attack - attacker.defense;
+    if (counterDmg <= 0) counterDmg = 1;
+    attacker.hp -= counterDmg;
+    defender.hasCounterAttacked = true;
+    addCombatLog(`${pieceName(defender)} ${coord(defender.col, defender.row)} ${t('logCounters')} — <span class="damage">${counterDmg} ${t('logDamage')}</span> (HP: ${Math.max(0,attacker.hp)}/${attacker.maxHp})`);
+    if (attacker.hp <= 0) killPiece(attacker);
+  }
+  return { defenderDied: false };
+}
+
+function killPiece(piece) {
+  piece.alive = false;
+  addCombatLog(`${pieceName(piece)} ${coord(piece.col, piece.row)} <span class="damage">${t('logDestroyed')}</span>`);
+  const killerColor = piece.color === 'white' ? 'black' : 'white';
+  if (piece.color === 'white') {
+    gameState.stats.blackKills++;
+    gameState.killsByType.black[piece.type] = (gameState.killsByType.black[piece.type] || 0) + 1;
+  } else {
+    gameState.stats.whiteKills++;
+    gameState.killsByType.white[piece.type] = (gameState.killsByType.white[piece.type] || 0) + 1;
+  }
+  gameState.turnQueue = gameState.turnQueue.filter(id => id !== piece.id);
+  gameState.waitQueue = gameState.waitQueue.filter(id => id !== piece.id);
+  checkKingStatus();
+}
+
+function pieceName(piece) {
+  const icon = piece.color === 'white' ? UNICODE_WHITE[piece.type] : UNICODE_BLACK[piece.type];
+  const colorClass = piece.color === 'white' ? 'piece-name-white' : 'piece-name-black';
+  return `<span class="piece-name ${colorClass}">${icon} ${tPiece(piece.type)}</span>`;
+}
+function coord(col, row) {
+  return `<span class="coord-tag">${String.fromCharCode(97 + col)}${row + 1}</span>`;
+}
+
+function addCombatLog(msg) {
+  gameState.combatLog.push(msg);
+  if (gameState.combatLog.length > 5) gameState.combatLog.shift();
+  // Also add to full move log
+  gameState.moveLog.push(msg);
+  // Limit total log size
+  if (gameState.moveLog.length > 200) gameState.moveLog.shift();
+}
+
+// ===== KING STATUS & WIN CONDITIONS =====
+function checkKingStatus() {
+  const whiteKing = gameState.pieces.find(p => p.alive && p.color === 'white' && p.type === 'king');
+  const blackKing = gameState.pieces.find(p => p.alive && p.color === 'black' && p.type === 'king');
+
+  gameState.whiteHasKing = !!whiteKing;
+  gameState.blackHasKing = !!blackKing;
+
+  // Check if a side has no king AND no pawns
+  if (!whiteKing) {
+    const whitePawns = gameState.pieces.filter(p => p.alive && p.color === 'white' && p.type === 'pawn');
+    if (whitePawns.length === 0) {
+      endGame('black');
+      return;
+    }
+  }
+  if (!blackKing) {
+    const blackPawns = gameState.pieces.filter(p => p.alive && p.color === 'black' && p.type === 'pawn');
+    if (blackPawns.length === 0) {
+      endGame('white');
+      return;
+    }
+  }
+}
+
+function endGame(winner) {
+  gameState.gameOver = true;
+  gameState.winner = winner;
+  gameState.phase = 'gameover';
+
+  const title = document.getElementById('endgame-title');
+  const stats = document.getElementById('endgame-stats');
+
+  title.textContent = winner === 'white' ? t('winWhite') : t('winBlack');
+
+  function buildKillsHTML(killerColor, killedColor) {
+    const kills = gameState.killsByType[killerColor];
+    const icons = killedColor === 'white' ? UNICODE_WHITE : UNICODE_BLACK;
+    const pieceOrder = ['king','queen','rook','bishop','knight','pawn'];
+    let html = '<div class="kills-row">';
+    let any = false;
+    for (const type of pieceOrder) {
+      if (kills[type] > 0) {
+        any = true;
+        html += `<span class="kill-chip"><span class="kc-icon" style="color:${killedColor==='white'?'var(--cream)':'var(--purple-piece)'}">${icons[type]}</span><span class="kc-count">×${kills[type]}</span></span>`;
+      }
+    }
+    if (!any) html += `<span style="font-size:0.8rem;color:var(--text-muted)">${t('statsNone')}</span>`;
+    html += '</div>';
+    return html;
+  }
+
+  stats.innerHTML = `
+    <div>${t('statsRounds')}: <strong>${gameState.round}</strong></div>
+    <div class="stats-section-title">${t('statsWhiteKilled')} (${gameState.stats.whiteKills}):</div>
+    ${buildKillsHTML('white','black')}
+    <div class="stats-section-title">${t('statsBlackKilled')} (${gameState.stats.blackKills}):</div>
+    ${buildKillsHTML('black','white')}
+    <div style="margin-top:10px;font-size:0.85rem;">${t('statsSurvivors')}: <strong>${gameState.pieces.filter(p=>p.alive&&p.color==='white').length}</strong> &nbsp;|  ${t('statsSurvivors2')}: <strong>${gameState.pieces.filter(p=>p.alive&&p.color==='black').length}</strong></div>
+  `;
+
+  document.getElementById('endgame-modal').classList.add('active');
+}
+
+// ===== PAWN PROMOTION =====
+function checkPromotion(piece) {
+  if (piece.type !== 'pawn') return false;
+  const promoRow = piece.color === 'white' ? 7 : 0;
+  return piece.row === promoRow;
+}
+
+function showPromotionUI(piece) {
+  gameState.phase = 'promotion';
+  gameState.promotionPawn = piece;
+
+  const container = document.getElementById('promo-options');
+  container.innerHTML = '';
+
+  const hasKing = gameState.pieces.some(p => p.alive && p.color === piece.color && p.type === 'king');
+  const choices = ['queen', 'rook', 'bishop', 'knight'];
+  if (!hasKing) choices.push('king');
+
+  const icons = piece.color === 'white' ? UNICODE_WHITE : UNICODE_BLACK;
+
+  for (const type of choices) {
+    const btn = document.createElement('div');
+    btn.className = 'promo-option';
+    btn.textContent = icons[type];
+    btn.title = tPiece(type);
+    btn.onclick = () => promote(piece, type);
+    container.appendChild(btn);
+  }
+
+  document.getElementById('promotion-modal').classList.add('active');
+}
+
+function promote(piece, newType) {
+  const newRank = RANK_MAP[newType];
+  piece.type = newType;
+  piece.rank = newRank;
+  piece.attack = newRank;
+  piece.defense = newRank;
+  piece.hp = newRank;
+  piece.maxHp = newRank;
+  piece.speed = newRank;
+
+  document.getElementById('promotion-modal').classList.remove('active');
+  gameState.phase = 'playing';
+  gameState.promotionPawn = null;
+
+  addCombatLog(`${t('logPawnPromo')} ${pieceName(piece)}!`);
+
+  if (newType === 'king') {
+    checkKingStatus();
+  }
+
+  // Continue to next turn
+  advanceToNextTurn();
+}
+
+// ===== BERSERKER BOT =====
+function isBotControlled(color) {
+  if (color === 'black') return true; // Black is always bot
+  if (color === 'white' && !gameState.whiteHasKing) return true;
+  return false;
+}
+
+function executeBotTurn(piece) {
+  const { moves, attacks } = getValidMoves(piece);
+
+  // Attack rule: attack highest rank enemy. Ties: lowest row then lowest col
+  if (attacks.length > 0) {
+    attacks.sort((a, b) => {
+      if (b.target.rank !== a.target.rank) return b.target.rank - a.target.rank;
+      if (a.target.row !== b.target.row) return a.target.row - b.target.row;
+      return a.target.col - b.target.col;
+    });
+
+    // Among all attacks on the best target, pick the approach closest to the target
+    const bestTarget = attacks[0].target;
+    const targetAttacks = attacks.filter(a => a.target === bestTarget);
+    let best = targetAttacks[0];
+    let bestDist = Math.abs(best.approachCol - best.col) + Math.abs(best.approachRow - best.row);
+    for (let i = 1; i < targetAttacks.length; i++) {
+      const d = Math.abs(targetAttacks[i].approachCol - targetAttacks[i].col) + Math.abs(targetAttacks[i].approachRow - targetAttacks[i].row);
+      if (d < bestDist) { bestDist = d; best = targetAttacks[i]; }
+    }
+    // deferAll=true: damage, HP log, and kill all deferred until after animation
+    const result = resolveCombat(piece, best.target, best.approachCol, best.approachRow, true);
+
+    // Note: promotion check after attack is deferred too (piece didn't change type yet)
+    return {
+      attacked: true,
+      deferred: result,          // contains { attacker, defender, damage, attackerPos, targetCol, targetRow }
+      targetCol: result.targetCol,
+      targetRow: result.targetRow
+    };
+  }
+
+  // Move rule: pawns always forward, others random
+  if (moves.length > 0) {
+    let chosen;
+    if (piece.type === 'pawn') {
+      // Move forward: pick the move that advances most
+      const dir = piece.color === 'white' ? 1 : -1;
+      const forwardMoves = moves.filter(m => (m.row - piece.row) * dir > 0);
+      if (forwardMoves.length > 0) {
+        forwardMoves.sort((a, b) => Math.abs(b.row - piece.row) - Math.abs(a.row - piece.row));
+        chosen = forwardMoves[0];
+      } else {
+        chosen = moves[Math.floor(Math.random() * moves.length)];
+      }
+    } else {
+      chosen = moves[Math.floor(Math.random() * moves.length)];
+    }
+
+    const fromCol = piece.col, fromRow = piece.row;
+    piece.col = chosen.col;
+    piece.row = chosen.row;
+    gameState.lastMoveFrom = { col: fromCol, row: fromRow };
+    gameState.lastMoveTo = { col: piece.col, row: piece.row };
+    gameState.lastAnimatedPieceId = piece.id;
+    const cl = String.fromCharCode(97 + piece.col); const rn = piece.row + 1;
+    addCombatLog(`${pieceName(piece)} → ${coord(piece.col, piece.row)}`);
+
+    // Check promotion
+    if (piece.alive && checkPromotion(piece)) {
+      const hasKing = gameState.pieces.some(p => p.alive && p.color === piece.color && p.type === 'king');
+      const promoType = hasKing ? 'queen' : 'king';
+      const newRank = RANK_MAP[promoType];
+      piece.type = promoType;
+      piece.rank = newRank;
+      piece.attack = newRank;
+      piece.defense = newRank;
+      piece.hp = newRank;
+      piece.maxHp = newRank;
+      piece.speed = newRank;
+      addCombatLog(`${t('logPawnAutoPromo')} ${pieceName(piece)}!`);
+      checkKingStatus();
+    }
+    return { attacked: false };  // moved
+  }
+
+  // Blocked: defend
+  piece.isDefending = true;
+  piece.defense = piece.rank + 1;
+  gameState.lastDefendedPieceId = piece.id;
+  addCombatLog(`${pieceName(piece)} ${t('logDefends')}`);
+  return { attacked: false };  // defended
+}
+
+// ===== TURN MANAGEMENT =====
+function startNewRound() {
+  gameState.round++;
+
+  // Reset per-round statuses
+  for (const p of gameState.pieces) {
+    if (p.alive) {
+      p.hasWaited = false;
+      p.hasCounterAttacked = false;
+      // Clear defense bonus at start of new round
+      if (p.isDefending) {
+        // Defense clears at start of piece's NEXT turn, so we handle it in startPieceTurn
+      }
+    }
+  }
+
+  gameState.turnQueue = generateTurnQueue();
+  gameState.waitQueue = [];
+  gameState.currentTurnIndex = 0;
+
+  startPieceTurn();
+}
+
+function startPieceTurn() {
+  if (gameState.gameOver) return;
+
+  // Clear highlights
+  gameState.selectedPiece = null;
+  gameState.validMoves = [];
+  gameState.attackablePieces = [];
+
+  // Get next piece from queue or wait queue
+  let currentPieceId = null;
+
+  while (gameState.turnQueue.length > 0) {
+    currentPieceId = gameState.turnQueue[0];
+    const piece = gameState.pieces.find(p => p.id === currentPieceId);
+    if (piece && piece.alive) break;
+    gameState.turnQueue.shift();
+    currentPieceId = null;
+  }
+
+  if (!currentPieceId) {
+    // Try wait queue
+    while (gameState.waitQueue.length > 0) {
+      currentPieceId = gameState.waitQueue[0];
+      const piece = gameState.pieces.find(p => p.id === currentPieceId);
+      if (piece && piece.alive) break;
+      gameState.waitQueue.shift();
+      currentPieceId = null;
+    }
+  }
+
+  if (!currentPieceId) {
+    // Round is over
+    startNewRound();
+    return;
+  }
+
+  const piece = gameState.pieces.find(p => p.id === currentPieceId);
+
+  // Clear defense from previous round's defend action
+  if (piece.isDefending) {
+    piece.isDefending = false;
+    piece.defense = piece.rank;
+  }
+
+  gameState.selectedPiece = piece;
+
+  render();
+
+  // Check if bot controlled
+  if (isBotControlled(piece.color)) {
+    gameState.isProcessingBot = true;
+    gameState.lastAnimatedPieceId = null;
+    render();
+    setTimeout(() => {
+      // Execute bot logic. For attacks, defender death is deferred so we can animate first.
+      const combatResult = executeBotTurn(piece);
+
+      if (gameState.gameOver) {
+        gameState.isProcessingBot = false;
+        render();
+        return;
+      }
+
+      // Remove from queue
+      if (gameState.turnQueue.length > 0 && gameState.turnQueue[0] === piece.id) {
+        gameState.turnQueue.shift();
+      } else if (gameState.waitQueue.length > 0 && gameState.waitQueue[0] === piece.id) {
+        gameState.waitQueue.shift();
+      }
+
+      const didAttack = combatResult && combatResult.attacked;
+      const deferred = combatResult && combatResult.deferred;
+
+      if (didAttack && deferred) {
+        // Phase 1: render SLIDE — bot moves to approach square, target still alive & undamaged
+        render();
+        setTimeout(() => {
+          // Phase 2: set LUNGE, render it — target still alive & undamaged
+          gameState.lastAnimatedPieceId = null;
+          gameState.lastAttackedPieceId = piece.id;
+          gameState.lastAttackTargetCol = deferred.targetCol;
+          gameState.lastAttackTargetRow = deferred.targetRow;
+          render();
+          setTimeout(() => {
+            // Phase 3: apply damage, log, kill, counter-attack — lunge just finished
+            gameState.lastAttackedPieceId = null;
+            render(); // clear lunge class before applying results
+            const atk = deferred.attacker;
+            const def = deferred.defender;
+            const dmg = deferred.damage;
+
+            def.hp -= dmg;
+            addCombatLog(`${pieceName(atk)} ${deferred.attackerPos} ${t('logAttacks')} ${pieceName(def)} ${coord(def.col, def.row)} — <span class="damage">${dmg} ${t('logDamage')}</span> (HP: ${Math.max(0,def.hp)}/${def.maxHp})`);
+
+            if (def.hp <= 0) {
+              killPiece(def);
+            } else {
+              // Counter-attack (defender survived)
+              const canCounter = def.type === 'king' || !def.hasCounterAttacked;
+              if (canCounter && def.alive && atk.alive) {
+                let counterDmg = def.attack - atk.defense;
+                if (counterDmg <= 0) counterDmg = 1;
+                atk.hp -= counterDmg;
+                def.hasCounterAttacked = true;
+                addCombatLog(`${pieceName(def)} ${coord(def.col, def.row)} ${t('logCounters')} — <span class="damage">${counterDmg} ${t('logDamage')}</span> (HP: ${Math.max(0,atk.hp)}/${atk.maxHp})`);
+                if (atk.hp <= 0) killPiece(atk);
+              }
+            }
+
+            // Promotion check (after combat)
+            if (atk.alive && checkPromotion(atk)) {
+              const hasKing = gameState.pieces.some(p => p.alive && p.color === atk.color && p.type === 'king');
+              const promoType = hasKing ? 'queen' : 'king';
+              const newRank = RANK_MAP[promoType];
+              atk.type = promoType; atk.rank = newRank; atk.attack = newRank;
+              atk.defense = newRank; atk.hp = newRank; atk.maxHp = newRank; atk.speed = newRank;
+              addCombatLog(`${t('logPawnAutoPromo')} ${pieceName(atk)}!`);
+              checkKingStatus();
+            }
+
+            if (gameState.gameOver) {
+              gameState.isProcessingBot = false;
+              gameState.lastDefendedPieceId = null;
+              render();
+              return;
+            }
+
+            gameState.isProcessingBot = false;
+            gameState.lastDefendedPieceId = null;
+            startPieceTurn();
+          }, 750);
+        }, 400);
+      } else {
+        // Move only (no attack) or defend: just slide, then next turn
+        render();
+        setTimeout(() => {
+          gameState.isProcessingBot = false;
+          gameState.lastAnimatedPieceId = null;
+          gameState.lastAttackedPieceId = null;
+          gameState.lastDefendedPieceId = null;
+          startPieceTurn();
+        }, 450);
+      }
+    }, 200);
+    return;
+  }
+
+  // Human player turn — enable buttons
+  updateActionButtons(piece);
+}
+
+function advanceToNextTurn() {
+  if (gameState.gameOver) { render(); return; }
+  render();
+  // Wait for player slide animation (380ms) then start next turn
+  setTimeout(() => {
+    gameState.lastAnimatedPieceId = null;
+    gameState.lastAttackedPieceId = null;
+    startPieceTurn();
+  }, 420);
+}
+
+function updateActionButtons(piece) {
+  const waitBtn = document.getElementById('wait-btn');
+  const defendBtn = document.getElementById('defend-btn');
+
+  waitBtn.disabled = piece.hasWaited || gameState.isProcessingBot;
+  defendBtn.disabled = gameState.isProcessingBot;
+}
+
+// ===== PLAYER ACTIONS =====
+function handleSquareClick(col, row, sq) {
+  if (gameState.phase !== 'playing') return;
+  if (gameState.isProcessingBot) return;
+
+  const piece = gameState.selectedPiece;
+  if (!piece || isBotControlled(piece.color)) return;
+
+  // Check if clicked on valid move
+  const moveTarget = gameState.validMoves.find(m => m.col === col && m.row === row);
+  if (moveTarget) {
+    // Execute move
+    const fromCol = piece.col, fromRow = piece.row;
+    piece.col = col;
+    piece.row = row;
+    // No slide animation for player pieces
+    gameState.lastMoveFrom = null;
+    gameState.lastMoveTo = null;
+    gameState.lastAnimatedPieceId = null;
+    const colLetter = String.fromCharCode(97 + col); const rowNum = row + 1;
+    addCombatLog(`${pieceName(piece)} → ${coord(col, row)}`);
+
+    // Check promotion
+    if (checkPromotion(piece)) {
+      // Remove from queue first
+      if (gameState.turnQueue.length > 0 && gameState.turnQueue[0] === piece.id) {
+        gameState.turnQueue.shift();
+      } else if (gameState.waitQueue.length > 0 && gameState.waitQueue[0] === piece.id) {
+        gameState.waitQueue.shift();
+      }
+      showPromotionUI(piece);
+      render();
+      return;
+    }
+
+    // Remove from queue and advance
+    if (gameState.turnQueue.length > 0 && gameState.turnQueue[0] === piece.id) {
+      gameState.turnQueue.shift();
+    } else if (gameState.waitQueue.length > 0 && gameState.waitQueue[0] === piece.id) {
+      gameState.waitQueue.shift();
+    }
+    gameState.selectedPiece = null;
+    gameState.validMoves = [];
+    advanceToNextTurn();
+    return;
+  }
+
+  // Check if clicked on attackable piece
+  const attackTargets = gameState.attackablePieces.filter(a => a.col === col && a.row === row);
+  if (attackTargets.length > 0) {
+    // Default approach = the one CLOSEST to target (shortest distance from approach to target)
+    let chosenApproach = attackTargets[0];
+    let _caBestDist = Math.abs(attackTargets[0].approachCol - col) + Math.abs(attackTargets[0].approachRow - row);
+    for (let _cai = 1; _cai < attackTargets.length; _cai++) {
+      const _cad = Math.abs(attackTargets[_cai].approachCol - col) + Math.abs(attackTargets[_cai].approachRow - row);
+      if (_cad < _caBestDist) { _caBestDist = _cad; chosenApproach = attackTargets[_cai]; }
+    }
+    // Override with hover-selected approach from the clicked square's dataset
+    // sq.dataset is already set by renderBoard to the closest approach;
+    // mousemove may have updated it to a user-chosen approach
+    if (sq && sq.dataset.selectedApproachCol !== undefined && sq.dataset.selectedApproachCol !== '') {
+      const selC = parseInt(sq.dataset.selectedApproachCol);
+      const selR = parseInt(sq.dataset.selectedApproachRow);
+      // Only override if this approach actually exists in our attackTargets
+      const found = attackTargets.find(a => a.approachCol === selC && a.approachRow === selR);
+      if (found) chosenApproach = found;
+    }
+    resolveCombat(piece, chosenApproach.target, chosenApproach.approachCol, chosenApproach.approachRow);
+
+    if (gameState.gameOver) { render(); return; }
+
+    // Check promotion
+    if (piece.alive && checkPromotion(piece)) {
+      if (gameState.turnQueue.length > 0 && gameState.turnQueue[0] === piece.id) {
+        gameState.turnQueue.shift();
+      } else if (gameState.waitQueue.length > 0 && gameState.waitQueue[0] === piece.id) {
+        gameState.waitQueue.shift();
+      }
+      showPromotionUI(piece);
+      render();
+      return;
+    }
+
+    // Remove from queue and advance
+    if (gameState.turnQueue.length > 0 && gameState.turnQueue[0] === piece.id) {
+      gameState.turnQueue.shift();
+    } else if (gameState.waitQueue.length > 0 && gameState.waitQueue[0] === piece.id) {
+      gameState.waitQueue.shift();
+    }
+    gameState.selectedPiece = null;
+    gameState.validMoves = [];
+    advanceToNextTurn();
+    return;
+  }
+}
+
+function handleWait() {
+  if (gameState.phase !== 'playing') return;
+  const piece = gameState.selectedPiece;
+  if (!piece || piece.hasWaited || isBotControlled(piece.color)) return;
+
+  piece.hasWaited = true;
+
+  // Remove from current queue
+  if (gameState.turnQueue.length > 0 && gameState.turnQueue[0] === piece.id) {
+    gameState.turnQueue.shift();
+  }
+
+  // Add to wait queue in proper position (reverse rank order)
+  // Insert maintaining reverse rank order
+  let inserted = false;
+  for (let i = 0; i < gameState.waitQueue.length; i++) {
+    const wp = gameState.pieces.find(p => p.id === gameState.waitQueue[i]);
+    if (wp && piece.rank < wp.rank) {
+      gameState.waitQueue.splice(i, 0, piece.id);
+      inserted = true;
+      break;
+    }
+    if (wp && piece.rank === wp.rank) {
+      // Same rank: maintain interleaving by color/col
+      // Find the end of this rank group and insert there
+      let j = i;
+      while (j < gameState.waitQueue.length) {
+        const pp = gameState.pieces.find(p => p.id === gameState.waitQueue[j]);
+        if (pp && pp.rank !== piece.rank) break;
+        j++;
+      }
+      gameState.waitQueue.splice(j, 0, piece.id);
+      inserted = true;
+      break;
+    }
+  }
+  if (!inserted) {
+    gameState.waitQueue.push(piece.id);
+  }
+
+  addCombatLog(`${pieceName(piece)} ${t('logWaits')} ${coord(piece.col, piece.row)}.`);
+  advanceToNextTurn();
+}
+
+function handleDefend() {
+  if (gameState.phase !== 'playing') return;
+  const piece = gameState.selectedPiece;
+  if (!piece || isBotControlled(piece.color)) return;
+
+  piece.isDefending = true;
+  piece.defense = piece.rank + 1;
+  gameState.lastDefendedPieceId = piece.id;
+
+  addCombatLog(`${pieceName(piece)} ${t('logDefendsManual')}`);
+
+  // Remove from queue and advance
+  if (gameState.turnQueue.length > 0 && gameState.turnQueue[0] === piece.id) {
+    gameState.turnQueue.shift();
+  } else if (gameState.waitQueue.length > 0 && gameState.waitQueue[0] === piece.id) {
+    gameState.waitQueue.shift();
+  }
+  advanceToNextTurn();
+  setTimeout(() => { gameState.lastDefendedPieceId = null; }, 1100);
+}
+
+// ===== RENDERING =====
+function render() {
+  renderBoard();
+  renderInfoPanel();
+  renderCombatLog();
+}
+
+// Direction vector -> sword emoji (pointing away from attacker toward target)
+// approachCol/Row is where attacker stands, targetCol/Row is where enemy is
+function getSwordEmoji(approachCol, approachRow, targetCol, targetRow) {
+  const dc = Math.sign(targetCol - approachCol);
+  const dr = Math.sign(targetRow - approachRow);
+  const dirMap = {
+    '0,-1': '↑', '1,-1': '↗', '1,0': '→', '1,1': '↘',
+    '0,1': '↓', '-1,1': '↙', '-1,0': '←', '-1,-1': '↖',
+  };
+  return dirMap[`${dc},${dr}`] || '⚔️';
+}
+
+// Returns a CSS cursor value: an SVG arrow pointing FROM approach TO target.
+// The arrow is rendered as a custom cursor so it replaces the system cursor
+// entirely — no overlay on top of piece glyphs.
+const _arrowCursorCache = {};
+function getArrowCursor(approachCol, approachRow, targetCol, targetRow) {
+  const dc = Math.sign(targetCol - approachCol);
+  const dr = Math.sign(targetRow - approachRow);
+  const key = `${dc},${dr}`;
+  if (_arrowCursorCache[key]) return _arrowCursorCache[key];
+
+  // Build a 32x32 SVG arrow cursor.
+  // Arrow points in direction (dc, dr) from center outward.
+  // IMPORTANT: board row increases upward (row 0 = white side = bottom of screen),
+  // but SVG y increases downward. So invert dr for screen coordinates.
+  const size = 32;
+  const cx = 16, cy = 16;
+  const len = 13;
+  const svgDr = -dr; // invert: row+1 = up on board = up on screen = negative SVG y
+  const tipX = cx + dc * len;
+  const tipY = cy + svgDr * len;
+  const tailX = cx - dc * len;
+  const tailY = cy - svgDr * len;
+
+  // Perpendicular unit vector for arrowhead wings
+  const mag = Math.sqrt(dc * dc + svgDr * svgDr) || 1;
+  const ux = dc / mag, uy = svgDr / mag;
+  const px = -uy, py = ux; // perpendicular
+  const wingLen = 7;
+  const wingOffset = 5; // how far back from tip the wings branch
+
+  const wx1 = tipX - ux * wingOffset + px * wingLen;
+  const wy1 = tipY - uy * wingOffset + py * wingLen;
+  const wx2 = tipX - ux * wingOffset - px * wingLen;
+  const wy2 = tipY - uy * wingOffset - py * wingLen;
+
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}' viewBox='0 0 ${size} ${size}'>`
+    + `<line x1='${tailX}' y1='${tailY}' x2='${tipX}' y2='${tipY}' stroke='white' stroke-width='3.5' stroke-linecap='round'/>`
+    + `<line x1='${tipX}' y1='${tipY}' x2='${wx1}' y2='${wy1}' stroke='white' stroke-width='3' stroke-linecap='round'/>`
+    + `<line x1='${tipX}' y1='${tipY}' x2='${wx2}' y2='${wy2}' stroke='white' stroke-width='3' stroke-linecap='round'/>`
+    + `<line x1='${tailX}' y1='${tailY}' x2='${tipX}' y2='${tipY}' stroke='%23e03030' stroke-width='2' stroke-linecap='round'/>`
+    + `<line x1='${tipX}' y1='${tipY}' x2='${wx1}' y2='${wy1}' stroke='%23e03030' stroke-width='1.5' stroke-linecap='round'/>`
+    + `<line x1='${tipX}' y1='${tipY}' x2='${wx2}' y2='${wy2}' stroke='%23e03030' stroke-width='1.5' stroke-linecap='round'/>`
+    + `</svg>`;
+
+  const encoded = svg.replace(/\s+/g, ' ');
+  const dataUri = `url("data:image/svg+xml,${encodeURIComponent(encoded)}") ${cx} ${cy}, crosshair`;
+  _arrowCursorCache[key] = dataUri;
+  return dataUri;
+}
+
+function renderBoard() {
+  const board = document.getElementById('board');
+  // Measure square size BEFORE clearing DOM (offsetWidth valid while old cells still exist)
+  updateSqPx();
+  board.innerHTML = '';
+
+  // Compute valid moves for active piece
+  let validMoves = [];
+  let attackable = [];
+
+  if (gameState.selectedPiece && gameState.selectedPiece.alive && !gameState.isProcessingBot && !isBotControlled(gameState.selectedPiece.color)) {
+    const result = getValidMoves(gameState.selectedPiece);
+    validMoves = result.moves;
+    attackable = result.attacks;
+  }
+  gameState.validMoves = validMoves;
+  gameState.attackablePieces = attackable;
+
+  // For each attackable target, group by target square and collect approach options
+  // approachSquares map: targetKey -> [{approachCol,approachRow},...]
+  const approachByTarget = {};
+  for (const a of attackable) {
+    const key = `${a.col},${a.row}`;
+    if (!approachByTarget[key]) approachByTarget[key] = [];
+    approachByTarget[key].push({ approachCol: a.approachCol, approachRow: a.approachRow });
+  }
+
+  // Render from row 7 (top = black side) to row 0 (bottom = white side)
+  for (let row = 7; row >= 0; row--) {
+    for (let col = 0; col < 8; col++) {
+      const sq = document.createElement('div');
+      const isLight = (row + col) % 2 === 1;
+      sq.className = `square ${isLight ? 'light' : 'dark'}`;
+      sq.dataset.col = col;
+      sq.dataset.row = row;
+
+      // Highlight last move
+      if (gameState.lastMoveFrom && gameState.lastMoveFrom.col === col && gameState.lastMoveFrom.row === row) {
+        sq.classList.add('last-move');
+      }
+      if (gameState.lastMoveTo && gameState.lastMoveTo.col === col && gameState.lastMoveTo.row === row) {
+        sq.classList.add('last-move');
+      }
+
+      // Check if valid move
+      const isValidMove = validMoves.some(m => m.col === col && m.row === row);
+      if (isValidMove) sq.classList.add('valid-move');
+
+      // Check if attackable target
+      const targetKey = `${col},${row}`;
+      const isAttackable = !!approachByTarget[targetKey];
+      if (isAttackable) {
+        sq.classList.add('attackable');
+        // Cursor set later in the attackable block below (directional arrow)
+      }
+
+      // Check if this square is an approach option (highlighted orange on hover)
+      // We'll handle this via mousemove on attackable squares
+
+      // Active piece highlight
+      if (gameState.selectedPiece && gameState.selectedPiece.col === col && gameState.selectedPiece.row === row && gameState.selectedPiece.alive) {
+        sq.classList.add('active-piece');
+      }
+
+      // Piece on this square
+      const piece = getPieceAt(col, row);
+      if (piece) {
+        const icons = piece.color === 'white' ? UNICODE_WHITE : UNICODE_BLACK;
+        const pieceEl = document.createElement('span');
+        pieceEl.className = `piece ${piece.color}`;
+
+        {
+          // --- Movement & Attack animations ---
+          const isMoving   = piece.id === gameState.lastAnimatedPieceId;
+          const isAttacking = piece.id === gameState.lastAttackedPieceId;
+
+          if (isMoving || isAttacking) {
+            const sqPx = cachedSqPx;
+
+            if (isMoving) {
+              const fromC = gameState.lastMoveFrom ? gameState.lastMoveFrom.col : col;
+              const fromR = gameState.lastMoveFrom ? gameState.lastMoveFrom.row : row;
+              // screen-x increases right (col increases right) → dx = (fromCol - toCol) * sqPx
+              // screen-y increases down; board row increases up → dy = (toRow - fromRow) * sqPx
+              const dxPx = (fromC - col) * sqPx;
+              const dyPx = (row - fromR) * sqPx;
+              pieceEl.style.setProperty('--dx-px', `${dxPx}px`);
+              pieceEl.style.setProperty('--dy-px', `${dyPx}px`);
+            }
+
+            if (isAttacking) {
+              const tCol = gameState.lastAttackTargetCol;
+              const tRow = gameState.lastAttackTargetRow;
+              const atkDxPx = Math.sign(tCol - col) * sqPx * 0.28;
+              const atkDyPx = Math.sign(row - tRow) * sqPx * 0.28; // row inverted for screen
+              pieceEl.style.setProperty('--atk-dx-px', `${atkDxPx}px`);
+              pieceEl.style.setProperty('--atk-dy-px', `${atkDyPx}px`);
+            }
+
+            // Combine animations if both apply (inline overrides CSS class conflicts)
+            if (isMoving && isAttacking) {
+              pieceEl.style.animation =
+                'pieceMoveIn 0.38s cubic-bezier(0.25,0.46,0.45,0.94) forwards, ' +
+                'pieceAttackLunge 0.32s ease-in-out 0.38s both';
+            } else if (isMoving) {
+              pieceEl.classList.add('piece-just-moved');
+            } else {
+              pieceEl.classList.add('piece-just-attacked');
+            }
+          }
+        }
+
+        // Bot-only: gold flash on defend
+        if (piece.id === gameState.lastDefendedPieceId && isBotControlled(piece.color)) {
+          sq.classList.add('piece-just-defended');
+        }
+
+        pieceEl.textContent = icons[piece.type];
+        sq.appendChild(pieceEl);
+
+        // HP display — always show
+        const hpEl = document.createElement('span');
+        hpEl.className = 'hp-display';
+        hpEl.textContent = `${piece.hp}/${piece.maxHp}`;
+        if (piece.hp <= piece.maxHp * 0.3) hpEl.style.color = '#ff6666';
+        else if (piece.hp <= piece.maxHp * 0.6) hpEl.style.color = '#ffaa44';
+        sq.appendChild(hpEl);
+
+        // Defense icon
+        if (piece.isDefending) {
+          const defEl = document.createElement('span');
+          defEl.className = 'status-defend';
+          defEl.textContent = '🛡';
+          sq.appendChild(defEl);
+        }
+
+        // Wait icon
+        if (piece.hasWaited) {
+          const waitEl = document.createElement('span');
+          waitEl.className = 'status-wait';
+          waitEl.textContent = '⏳';
+          sq.appendChild(waitEl);
+        }
+      }
+
+      // Custom cursor for attackable targets: cursor becomes a directional arrow
+      // showing the approach direction. No overlay on the piece itself.
+      if (isAttackable) {
+        const approaches = approachByTarget[targetKey];
+
+        // Pick default approach = closest to target
+        let defaultApproach = approaches[0];
+        let _bestDist = Math.abs(approaches[0].approachCol - col) + Math.abs(approaches[0].approachRow - row);
+        for (let _i = 1; _i < approaches.length; _i++) {
+          const _d = Math.abs(approaches[_i].approachCol - col) + Math.abs(approaches[_i].approachRow - row);
+          if (_d < _bestDist) { _bestDist = _d; defaultApproach = approaches[_i]; }
+        }
+
+        sq.dataset.selectedApproachCol = defaultApproach.approachCol;
+        sq.dataset.selectedApproachRow = defaultApproach.approachRow;
+
+        // Apply initial cursor based on default approach
+        sq.style.cursor = getArrowCursor(defaultApproach.approachCol, defaultApproach.approachRow, col, row);
+
+        // On mousemove: update cursor direction based on mouse sector within square
+        sq.addEventListener('mousemove', (e) => {
+          const rect = sq.getBoundingClientRect();
+          const mx = (e.clientX - rect.left) / rect.width;
+          const my = (e.clientY - rect.top) / rect.height;
+          const mdx = mx < 0.33 ? -1 : mx > 0.67 ? 1 : 0;
+          // my increases downward on screen; board row increases upward.
+          // Mouse at top of square (my < 0.33) = approach from higher board row (adr > 0).
+          const mdy = my < 0.33 ? 1 : my > 0.67 ? -1 : 0; // inverted: top of screen = higher row
+
+          // Find approach whose direction from target best matches mouse sector.
+          // adc/adr = direction from target toward approach (board coords).
+          let best = defaultApproach;
+          let bestScore = -Infinity;
+          for (const ap of approaches) {
+            const adc = Math.sign(ap.approachCol - col);
+            const adr = Math.sign(ap.approachRow - row);
+            const score = (mdx !== 0 || mdy !== 0)
+              ? adc * mdx + adr * mdy
+              : (Math.abs(ap.approachCol - col) + Math.abs(ap.approachRow - row)) * -1;
+            if (score > bestScore) { bestScore = score; best = ap; }
+          }
+          sq.style.cursor = getArrowCursor(best.approachCol, best.approachRow, col, row);
+          sq.dataset.selectedApproachCol = best.approachCol;
+          sq.dataset.selectedApproachRow = best.approachRow;
+        });
+
+        sq.addEventListener('mouseleave', () => {
+          // Reset to default approach on mouse leave
+          sq.style.cursor = getArrowCursor(defaultApproach.approachCol, defaultApproach.approachRow, col, row);
+          sq.dataset.selectedApproachCol = defaultApproach.approachCol;
+          sq.dataset.selectedApproachRow = defaultApproach.approachRow;
+        });
+      }
+
+      sq.addEventListener('click', () => handleSquareClick(col, row, sq));
+      board.appendChild(sq);
+    }
+  }
+
+  // Render coordinate labels on the wrapper
+  renderCoords();
+}
+
+function renderCoords() {
+  const wrapper = document.getElementById('board-coords-wrapper');
+  // Remove old coord labels
+  wrapper.querySelectorAll('.coord-label').forEach(el => el.remove());
+
+  const files = ['a','b','c','d','e','f','g','h'];
+  const boardEl = document.getElementById('board-wrapper');
+  const boardRect = boardEl.getBoundingClientRect();
+  const wrapRect = wrapper.getBoundingClientRect();
+  if (boardRect.width === 0) return;
+
+  const cellW = boardRect.width / 8;
+  const cellH = boardRect.height / 8;
+
+  for (let i = 0; i < 8; i++) {
+    // File labels (a-h) below board
+    const fileEl = document.createElement('div');
+    fileEl.className = 'coord-label coord-file';
+    fileEl.textContent = files[i];
+    // Position: left = boardEl.left - wrapRect.left + cellW * i + cellW/2
+    fileEl.style.left = (boardRect.left - wrapRect.left + cellW * i + cellW / 2) + 'px';
+    fileEl.style.bottom = (wrapRect.bottom - boardRect.bottom + 2) + 'px';
+    wrapper.appendChild(fileEl);
+
+    // Rank labels (1-8) left of board, row 0 is bottom = rank 1
+    const rankEl = document.createElement('div');
+    rankEl.className = 'coord-label coord-rank';
+    rankEl.textContent = (8 - i).toString(); // row 7 (top visual) = rank 8
+    // Position: top = boardEl.top - wrapRect.top + cellH * i + cellH/2
+    rankEl.style.top = (boardRect.top - wrapRect.top + cellH * i + cellH / 2) + 'px';
+    rankEl.style.left = (boardRect.left - wrapRect.left - 4) + 'px';
+    wrapper.appendChild(rankEl);
+  }
+}
+
+function renderInfoPanel() {
+  // Round
+  document.getElementById('round-display').textContent = gameState.round;
+
+  // Active piece
+  const apd = document.getElementById('active-piece-display');
+  if (gameState.selectedPiece && gameState.selectedPiece.alive) {
+    const p = gameState.selectedPiece;
+    const icon = p.color === 'white' ? UNICODE_WHITE[p.type] : UNICODE_BLACK[p.type];
+    const colorName = p.color === 'white' ? t('colorWhite') : t('colorBlack');
+    apd.innerHTML = `${icon} ${tPiece(p.type)} (${colorName})`;
+    if (gameState.isProcessingBot) {
+      apd.innerHTML += ` <span class="bot-thinking">думает...</span>`;
+    }
+  } else {
+    apd.textContent = '—';
+  }
+
+  // King HP bars
+  const whiteKing = gameState.pieces.find(p => p.alive && p.color === 'white' && p.type === 'king');
+  const blackKing = gameState.pieces.find(p => p.alive && p.color === 'black' && p.type === 'king');
+
+  const wkHp = document.getElementById('white-king-hp');
+  const wkText = document.getElementById('white-king-hp-text');
+  if (whiteKing) {
+    wkHp.style.width = `${(whiteKing.hp / whiteKing.maxHp) * 100}%`;
+    wkText.textContent = `${whiteKing.hp}/${whiteKing.maxHp}`;
+  } else {
+    wkHp.style.width = '0%';
+    wkText.textContent = '☠';
+  }
+
+  const bkHp = document.getElementById('black-king-hp');
+  const bkText = document.getElementById('black-king-hp-text');
+  if (blackKing) {
+    bkHp.style.width = `${(blackKing.hp / blackKing.maxHp) * 100}%`;
+    bkText.textContent = `${blackKing.hp}/${blackKing.maxHp}`;
+  } else {
+    bkHp.style.width = '0%';
+    bkText.textContent = '☠';
+  }
+
+  // Action buttons
+  if (gameState.selectedPiece && !isBotControlled(gameState.selectedPiece.color)) {
+    document.getElementById('wait-btn').disabled = gameState.selectedPiece.hasWaited || gameState.isProcessingBot;
+    document.getElementById('defend-btn').disabled = gameState.isProcessingBot;
+  } else {
+    document.getElementById('wait-btn').disabled = true;
+    document.getElementById('defend-btn').disabled = true;
+  }
+
+  // Turn queue
+  renderTurnQueue();
+}
+
+function renderTurnQueue() {
+  const container = document.getElementById('turn-queue');
+  container.innerHTML = '';
+
+  const allQueue = [...gameState.turnQueue, '---WAIT---', ...gameState.waitQueue];
+
+  for (const item of allQueue) {
+    if (item === '---WAIT---') {
+      if (gameState.waitQueue.length > 0) {
+        const sep = document.createElement('div');
+        sep.style.cssText = 'font-size:0.7rem; color:var(--text-muted); padding:2px 4px; font-style:italic; border-top:1px solid rgba(200,168,78,0.15); margin-top:2px;';
+        sep.textContent = currentLang === 'ru' ? '— Ожидающие —' : '— Waiting —';
+        container.appendChild(sep);
+      }
+      continue;
+    }
+
+    const piece = gameState.pieces.find(p => p.id === item);
+    if (!piece || !piece.alive) continue;
+
+    const div = document.createElement('div');
+    div.className = 'queue-item';
+    if (gameState.selectedPiece && piece.id === gameState.selectedPiece.id) {
+      div.classList.add('current');
+    }
+
+    const icon = piece.color === 'white' ? UNICODE_WHITE[piece.type] : UNICODE_BLACK[piece.type];
+    div.innerHTML = `
+      <span class="q-icon" style="color:${piece.color === 'white' ? 'var(--cream)' : 'var(--purple-piece)'}">${icon}</span>
+      <span class="q-label">${tPiece(piece.type)}</span>
+      <span class="q-hp">${piece.hp}/${piece.maxHp}</span>
+    `;
+    container.appendChild(div);
+  }
+}
+
+function renderCombatLog() {
+  // Combat log below board is hidden — all entries go to side panel only
+
+  // Full move log in side panel
+  const moveLogEl = document.getElementById('move-log');
+  if (moveLogEl) {
+    moveLogEl.innerHTML = '';
+    for (let i = gameState.moveLog.length - 1; i >= 0; i--) {
+      const div = document.createElement('div');
+      div.className = 'move-log-entry';
+      div.innerHTML = gameState.moveLog[i];
+      moveLogEl.appendChild(div);
+    }
+  }
+}
+
+// ===== GAME START =====
+function startGame() {
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('game-container').classList.add('active');
+
+  gameState.pieces = initPieces();
+  gameState.round = 1;
+  gameState.phase = 'playing';
+  gameState.turnQueue = generateTurnQueue();
+  gameState.waitQueue = [];
+  gameState.currentTurnIndex = 0;
+  gameState.combatLog = [];
+  gameState.moveLog = [];
+  gameState.stats = { whiteKills: 0, blackKills: 0 };
+  gameState.killsByType = { white: {}, black: {} };
+  gameState.lastAnimatedPieceId = null;
+  gameState.lastAttackedPieceId = null;
+  gameState.lastAttackTargetCol = null;
+  gameState.lastAttackTargetRow = null;
+  gameState.lastDefendedPieceId = null;
+  gameState.lastKilledPiece = null;
+  gameState.gameOver = false;
+  gameState.winner = null;
+  gameState.selectedPiece = null;
+  gameState.lastMoveFrom = null;
+  gameState.lastMoveTo = null;
+  gameState.whiteHasKing = true;
+  gameState.blackHasKing = true;
+  gameState.isProcessingBot = false;
+
+  // Apply round 1 auto-wait for rank >= 3
+  applyRound1AutoWait();
+
+  // Refresh all UI labels for selected language
+  applyLang();
+
+  render();
+  startPieceTurn();
+}
+
+function restartGame() {
+  document.getElementById('endgame-modal').classList.remove('active');
+  nextPieceId = 1;
+  startGame();
+}
+
+// ===== LANGUAGE SELECTION =====
+function applyLang() {
+  // Title-screen labels
+  const boardTitle = document.getElementById('board-title');
+  if (boardTitle) boardTitle.textContent = t('gameTitle');
+  const startTitle = document.getElementById('start-title');
+  if (startTitle) startTitle.textContent = t('gameTitle');
+  const startSubtitle = document.getElementById('start-subtitle');
+  if (startSubtitle) startSubtitle.textContent = t('gameSubtitle');
+  const startBtn = document.getElementById('start-btn');
+  if (startBtn) startBtn.textContent = t('startBtn');
+  const restartBtn = document.getElementById('restart-btn');
+  if (restartBtn) restartBtn.textContent = t('restartBtn');
+  // Action buttons
+  const waitBtn = document.getElementById('wait-btn');
+  if (waitBtn) waitBtn.textContent = t('waitBtn');
+  const defendBtn = document.getElementById('defend-btn');
+  if (defendBtn) defendBtn.textContent = t('defendBtn');
+  // Panel titles
+  const lblRound = document.getElementById('lbl-round');
+  if (lblRound) lblRound.textContent = t('lblRound');
+  const lblActive = document.getElementById('lbl-active');
+  if (lblActive) lblActive.textContent = t('lblActive');
+  const lblKings = document.getElementById('lbl-kings');
+  if (lblKings) lblKings.textContent = t('lblKings');
+  const lblLog = document.getElementById('lbl-log');
+  if (lblLog) lblLog.textContent = t('lblLog');
+  // Promo
+  const promoTitle = document.getElementById('promo-title');
+  if (promoTitle) promoTitle.textContent = t('promoTitle');
+  // Author
+  const authorEl = document.getElementById('start-author');
+  if (authorEl) authorEl.textContent = t('author');
+}
+
+// ===== EVENT LISTENERS =====
+function selectLang(lang) {
+  currentLang = lang;
+  document.getElementById('lang-screen').style.display = 'none';
+  var ss = document.getElementById('start-screen');
+  ss.style.display = 'flex';
+  ss.style.flexDirection = 'column';
+  ss.style.alignItems = 'center';
+  ss.style.justifyContent = 'center';
+  applyLang();
+}
+document.getElementById('lang-en').addEventListener('click', function() { selectLang('en'); });
+document.getElementById('lang-ru').addEventListener('click', function() { selectLang('ru'); });
+document.getElementById('start-btn').addEventListener('click', startGame);
+document.getElementById('restart-btn').addEventListener('click', restartGame);
+document.getElementById('wait-btn').addEventListener('click', handleWait);
+document.getElementById('defend-btn').addEventListener('click', handleDefend);
+
+// ===== TESTING HOOKS =====
+window.render_game_to_text = function() {
+  return JSON.stringify({
+    round: gameState.round,
+    currentPiece: gameState.selectedPiece ? {
+      id: gameState.selectedPiece.id,
+      type: gameState.selectedPiece.type,
+      color: gameState.selectedPiece.color,
+      col: gameState.selectedPiece.col,
+      row: gameState.selectedPiece.row
+    } : null,
+    board: gameState.pieces.filter(p => p.alive).map(p => ({
+      id: p.id, color: p.color, type: p.type, rank: p.rank,
+      hp: p.hp, maxHp: p.maxHp, col: p.col, row: p.row,
+      status: p.isDefending ? 'defending' : p.hasWaited ? 'waited' : 'normal'
+    })),
+    phase: gameState.phase,
+    gameOver: gameState.gameOver,
+    queueLength: gameState.turnQueue.length + gameState.waitQueue.length
+  });
+};
+
+window.advanceTime = function(ms) {
+  // For testing: simulate passage of time
+  return new Promise(resolve => setTimeout(resolve, ms));
+};
+
+</script>
+</body>
+</html>
